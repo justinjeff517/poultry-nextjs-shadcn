@@ -1,6 +1,5 @@
 "use client";
-
-import React from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MoreVertical } from "lucide-react";
@@ -155,68 +154,69 @@ const sampleData: RecordType[] = [
   },
 ];
 
-
 const sortedData = sampleData.sort((a, b) => a.day_age - b.day_age);
 
-const Page: React.FC = () => (
-  <div className="h-full flex flex-col p-6 space-y-4">
-    <div className="flex items-center justify-between">
-      <h1 className="text-xl font-semibold">Alpha Flock Records</h1>
-    </div>
+export default function Page() {
+  const params = useParams();
+  const slug = params.batch;
+  return (
+    <div className="h-full flex flex-col p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Alpha Flock Records</h1>
+      </div>
 
-    <div className="flex items-center gap-4">
-      <Link href="/records/new">
-        <Button asChild className="justify-start">
-          <span>New Record</span>
-        </Button>
-      </Link>
-    </div>
+      <div className="flex items-center gap-4">
+        <Link href={`/growers/${slug}/new`}>
+          <Button asChild className="justify-start">
+            <span>New Record</span>
+          </Button>
+        </Link>
+      </div>
 
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Day Age</TableHead>
-          <TableHead>Week Age</TableHead>
-          <TableHead>Date</TableHead>
-          <TableHead>Feeds (g)</TableHead>
-          <TableHead>Dead</TableHead>
-          <TableHead>Prev Pop</TableHead>
-          <TableHead>Curr Pop</TableHead>
-          <TableHead>Medications</TableHead>
-          <TableHead>Vaccinations</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sortedData.map((r) => (
-          <TableRow key={r.id}>
-            <TableCell>{r.day_age}</TableCell>
-            <TableCell>{r.week_age}</TableCell>
-            <TableCell>{r.date}</TableCell>
-            <TableCell>{r.feeds_grams}</TableCell>
-            <TableCell>{r.dead}</TableCell>
-            <TableCell>{r.previous_population}</TableCell>
-            <TableCell>{r.current_population}</TableCell>
-            <TableCell>{r.medications.map((m) => m.name).join(", ")}</TableCell>
-            <TableCell>{r.vaccinations.map((v) => v.name).join(", ")}</TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="p-1">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>View</DropdownMenuItem>
-                  <DropdownMenuItem>Modify</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Day Age</TableHead>
+            <TableHead>Week Age</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Feeds (g)</TableHead>
+            <TableHead>Dead</TableHead>
+            <TableHead>Prev Pop</TableHead>
+            <TableHead>Curr Pop</TableHead>
+            <TableHead>Medications</TableHead>
+            <TableHead>Vaccinations</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  </div>
-);
-
-export default Page;
+        </TableHeader>
+        <TableBody>
+          {sortedData.map((r) => (
+            <TableRow key={r.id}>
+              <TableCell>{r.day_age}</TableCell>
+              <TableCell>{r.week_age}</TableCell>
+              <TableCell>{r.date}</TableCell>
+              <TableCell>{r.feeds_grams}</TableCell>
+              <TableCell>{r.dead}</TableCell>
+              <TableCell>{r.previous_population}</TableCell>
+              <TableCell>{r.current_population}</TableCell>
+              <TableCell>{r.medications.map((m) => m.name).join(", ")}</TableCell>
+              <TableCell>{r.vaccinations.map((v) => v.name).join(", ")}</TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="p-1">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>View</DropdownMenuItem>
+                    <DropdownMenuItem>Modify</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}

@@ -37,7 +37,18 @@ const data = {
       title: "Output",
       url: "/output",
       icon: IconEggs,
+    },
+    {
+      title: "Vaccination",
+      url: "/vaccination",
+      icon: IconEggs,
+    },
+    {
+      title: "Growers",
+      url: "/growers",
+      icon: IconEggs,
     }
+
 
   ],
 
