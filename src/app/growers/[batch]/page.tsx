@@ -209,7 +209,9 @@ export default function Page() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>View</DropdownMenuItem>
-                    <DropdownMenuItem>Modify</DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/growers/${slug}/${r.id}`}>Modify</Link>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
