@@ -1,144 +1,163 @@
-"use client"
-import React, { useRef } from "react"
-import { useForm } from "react-hook-form"
+"use client";
+
+import React, { useState, useEffect, useMemo } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardContent,
   CardFooter,
-} from "@/components/ui/card"
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { MultiSelect } from "@/components/multi-select";
 
-type RecordFormValues = {
-  date: string
-  day_age: number
-  week_age: number
-  feeds_grams: number
-  dead: number
-  previous_population: number
-  current_population: number
-  medications: string       // comma-separated names
-  vaccinations: string      // comma-separated names
-}
+const medOptions = [
+  { value: "tylosin", label: "Tylosin" },
+  { value: "amoxicillin", label: "Amoxicillin" },
+  { value: "oxytetracycline", label: "Oxytetracycline" },
+];
 
-type AddRecordFormProps = {
-  startDate?: string         // optional; defaults to initial flock date
-  previousPopulation?: number // optional; defaults to 0
-}
+const vacOptions = [
+  { value: "nd-b1", label: "ND B1" },
+  { value: "ib-h120", label: "IB H120" },
+  { value: "marek", label: "Marek" },
+];
 
-export default function AddRecordForm({
+const recordFormSchema = z.object({
+  date: z.string().nonempty("Date is required"),
+  day_age: z.number().min(0),
+  week_age: z.number().min(0),
+  feeds_grams: z.number().min(0),
+  dead: z.number().min(0),
+  previous_population: z.number().min(0),
+  current_population: z.number().min(0),
+  medications: z.array(z.string()).optional(),
+  vaccinations: z.array(z.string()).optional(),
+});
+type RecordFormValues = z.infer<typeof recordFormSchema>;
+
+type Props = {
+  startDate?: string;
+  initialPopulation?: number;
+};
+
+export default function Page({
   startDate = new Date().toISOString().split("T")[0],
-  previousPopulation = 0,
-}: AddRecordFormProps) {
-  const today = new Date().toISOString().split("T")[0]
+  initialPopulation = 1250,
+}: Props) {
+  const today = new Date().toISOString().split("T")[0];
   const dayAge =
     Math.floor(
       (new Date(today).getTime() - new Date(startDate).getTime()) /
         (1000 * 60 * 60 * 24)
-    ) + 1
-  const weekAge = Math.ceil(dayAge / 7)
+    ) + 1;
+  const weekAge = Math.ceil(dayAge / 7);
 
-  // define initial default values once
-  const defaultValues: RecordFormValues = {
+  const [previousRecord, setPreviousRecord] = useState<RecordFormValues>({
     date: today,
     day_age: dayAge,
     week_age: weekAge,
     feeds_grams: 0,
     dead: 0,
-    previous_population: previousPopulation,
-    current_population: previousPopulation,
-    medications: "Tylosin, Amoxicillin",
-    vaccinations: "ND B1, IB H120",
-  }
-  
+    previous_population: initialPopulation,
+    current_population: initialPopulation,
+    medications: [],
+    vaccinations: [],
+  });
 
-  // keep a static reference for previous record display
-  const previousRecord = useRef(defaultValues).current
+  const defaultValues = useMemo<RecordFormValues>(
+    () => ({
+      date: today,
+      day_age: dayAge,
+      week_age: weekAge,
+      feeds_grams: 0,
+      dead: 0,
+      previous_population: previousRecord.current_population,
+      current_population: previousRecord.current_population,
+      medications: [],
+      vaccinations: [],
+    }),
+    [today, dayAge, weekAge, previousRecord.current_population]
+  );
 
-  const form = useForm<RecordFormValues>({ defaultValues })
+  const form = useForm<RecordFormValues>({
+    resolver: zodResolver(recordFormSchema),
+    defaultValues,
+    mode: "onChange",
+  });
 
-  function onSubmit(values: RecordFormValues) {
-    const meds = values.medications
-      .split(",")
-      .filter((n) => n.trim())
-      .map((name) => ({
-        name: name.trim(),
-        slug: name
-          .trim()
-          .toLowerCase()
-          .replace(/\s+/g, "-"),
-      }))
-    const vaxes = values.vaccinations
-      .split(",")
-      .filter((n) => n.trim())
-      .map((name) => ({
-        name: name.trim(),
-        slug: name
-          .trim()
-          .toLowerCase()
-          .replace(/\s+/g, "-"),
-      }))
+  const dead = form.watch("dead");
+  const prevPop = form.watch("previous_population");
+  useEffect(() => {
+    form.setValue("current_population", prevPop - (dead ?? 0), {
+      shouldValidate: true,
+    });
+  }, [dead, prevPop, form]);
 
-    console.log({
+  const onSubmit = async (values: RecordFormValues) => {
+    //log data
+    console.log(values);
+    const meds =
+      values.medications
+        ?.map((slug) => medOptions.find((m) => m.value === slug)!)
+        .filter(Boolean) ?? [];
+    const vaxes =
+      values.vaccinations
+        ?.map((slug) => vacOptions.find((v) => v.value === slug)!)
+        .filter(Boolean) ?? [];
+
+    await new Promise((r) => setTimeout(r, 500));
+    console.log({ ...values, medications: meds, vaccinations: vaxes });
+
+    setPreviousRecord({
       ...values,
-      medications: meds,
-      vaccinations: vaxes,
-    })
-    // → send to your API here
-  }
+      medications: meds.map((m) => m.value),
+      vaccinations: vaxes.map((v) => v.value),
+    });
+    form.reset(defaultValues);
+  };
 
   return (
-    <main className="grid grid-cols-3 gap-6 p-6 bg-gray-50 min-h-screen">
-      {/* Previous record details */}
-      <Card className="h-full shadow-sm">
-        <CardHeader>
-          <CardTitle>Previous Data</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <dl className="grid grid-cols-2 gap-4 text-sm">
-            <dt className="font-medium">Date:</dt>
-            <dd>{previousRecord.date}</dd>
+    <div className="flex">
+      {/* Previous Data */}
+      <div className="flex-1 p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Previous Data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid grid-cols-2 gap-4 text-sm">
+              {Object.entries(previousRecord).map(([k, v]) => (
+                <React.Fragment key={k}>
+                  <dt className="font-medium">
+                    {k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}:
+                  </dt>
+                  <dd>
+                    {Array.isArray(v) ? v.join(", ") : v ?? "—"}
+                  </dd>
+                </React.Fragment>
+              ))}
+            </dl>
+          </CardContent>
+        </Card>
+      </div>
 
-            <dt className="font-medium">Day Age:</dt>
-            <dd>{previousRecord.day_age}</dd>
-
-            <dt className="font-medium">Week Age:</dt>
-            <dd>{previousRecord.week_age}</dd>
-
-            <dt className="font-medium">Feeds (g):</dt>
-            <dd>{previousRecord.feeds_grams}</dd>
-
-            <dt className="font-medium">Dead:</dt>
-            <dd>{previousRecord.dead}</dd>
-
-            <dt className="font-medium">Previous Population:</dt>
-            <dd>{previousRecord.previous_population}</dd>
-
-            <dt className="font-medium">Current Population:</dt>
-            <dd>{previousRecord.current_population}</dd>
-
-            <dt className="font-medium">Medications:</dt>
-            <dd>{previousRecord.medications || "—"}</dd>
-
-            <dt className="font-medium">Vaccinations:</dt>
-            <dd>{previousRecord.vaccinations || "—"}</dd>
-          </dl>
-        </CardContent>
-      </Card>
-
-      {/* New record form */}
-      <div className="col-span-2">
-        <Card className="shadow-md">
+      {/* Add New Record */}
+      <div className="flex-1 p-4">
+        <Card>
           <CardHeader>
             <CardTitle>Add New Record</CardTitle>
           </CardHeader>
@@ -148,35 +167,23 @@ export default function AddRecordForm({
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="grid grid-cols-2 gap-4"
               >
-                {/* Read-only calculated and prefills */}
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} disabled />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {( ["day_age", "week_age", "previous_population", "current_population"] as const ).map((key) => (
+                {/* Auto-filled fields */}
+                {["date","day_age","week_age","previous_population","current_population"].map((name) => (
                   <FormField
-                    key={key}
+                    key={name}
                     control={form.control}
-                    name={key}
+                    name={name as any}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          {key.replace(/_/g, " ").replace(/\b\w/g, (c) =>
-                            c.toUpperCase()
-                          )}
+                          {name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                         </FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} disabled />
+                          <Input
+                            type={name === "date" ? "date" : "number"}
+                            disabled
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -185,70 +192,103 @@ export default function AddRecordForm({
                 ))}
 
                 {/* User inputs */}
-                <FormField
-                  control={form.control}
-                  name="feeds_grams"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Feeds (grams)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+<FormField
+  control={form.control}
+  name="feeds_grams"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Feeds (g)</FormLabel>
+      <FormControl>
+        <Input
+          type="number"
+          value={field.value ?? ''}
+          onChange={e => field.onChange(parseFloat(e.target.value))}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
 
-                <FormField
-                  control={form.control}
-                  name="dead"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dead</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+<FormField
+  control={form.control}
+  name="dead"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Dead</FormLabel>
+      <FormControl>
+        <Input
+          type="number"
+          value={field.value ?? ''}
+          onChange={e => field.onChange(parseInt(e.target.value, 10))}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
 
-                <FormField
+                {/* Medications */}
+                <Controller
                   control={form.control}
                   name="medications"
                   render={({ field }) => (
                     <FormItem className="col-span-2">
                       <FormLabel>Medications</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. PureTubig, VitaBoost" {...field} />
+                        <MultiSelect
+                          options={medOptions}
+                          multiple
+                          placeholder="Select medications"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <FormField
+                {/* Vaccinations */}
+                <Controller
                   control={form.control}
                   name="vaccinations"
                   render={({ field }) => (
                     <FormItem className="col-span-2">
                       <FormLabel>Vaccinations</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Ma5+clone30" {...field} />
+                        <MultiSelect
+                          options={vacOptions}
+                 
+                          placeholder="Select vaccinations"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <CardFooter className="col-span-2 flex justify-end">
-                  <Button type="submit">Add Record</Button>
+                {/* Actions */}
+                <CardFooter className="col-span-2 flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => form.reset(defaultValues)}
+                    disabled={form.formState.isSubmitting}
+                  >
+                    Reset
+                  </Button>
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? "Submitting..." : "Add Record"}
+                  </Button>
                 </CardFooter>
               </form>
             </Form>
           </CardContent>
         </Card>
       </div>
-    </main>
-  )
+    </div>
+  );
 }

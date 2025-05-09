@@ -1,181 +1,225 @@
-"use client"
-import React, { FC } from "react"
-import { useForm, SubmitHandler } from "react-hook-form"
-import { useRouter } from "next/navigation"
+"use client";
+
+import React, { useState, useEffect, useMemo } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardContent,
   CardFooter,
-} from "@/components/ui/card"
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { MultiSelect } from "@/components/multi-select";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
-interface RecordFormValues {
-  date: string
-  day_age: number
-  week_age: number
-  previous_population: number
-  feeds_grams: number
-  dead: number
-  current_population: number
-  medications: string
-  vaccinations: string
-}
+const medOptions = [
+  { value: "tylosin", label: "Tylosin" },
+  { value: "amoxicillin", label: "Amoxicillin" },
+  { value: "oxytetracycline", label: "Oxytetracycline" },
+];
 
-interface RecordType {
-  id: string
-  date: string
-  day_age: number
-  week_age: number
-  previous_population: number
-  feeds_grams: number
-  dead: number
-  current_population: number
-  medications: { name: string; slug: string }[]
-  vaccinations: { name: string; slug: string }[]
-}
+const vacOptions = [
+  { value: "nd-b1", label: "ND B1" },
+  { value: "ib-h120", label: "IB H120" },
+  { value: "marek", label: "Marek" },
+];
 
-const dummyRecord: RecordType = {
-  id: "1",
-  date: "2025-05-05",
-  day_age: 7,
-  week_age: 1,
-  previous_population: 1996,
-  feeds_grams: 1575,
-  dead: 1,
-  current_population: 1995,
-  medications: [{ name: "PureTubig", slug: "puretubig" }],
-  vaccinations: [{ name: "Ma5+clone30", slug: "ma5clone30" }],
-}
+const recordFormSchema = z.object({
+  date: z.string().nonempty("Date is required"),
+  day_age: z.number().min(0),
+  week_age: z.number().min(0),
+  previous_population: z.number().min(0),
+  feeds_grams: z.number().min(0),
+  dead: z.number().min(0),
+  current_population: z.number().min(0),
+  medications: z.array(z.string()).optional(),
+  vaccinations: z.array(z.string()).optional(),
+});
+type RecordFormValues = z.infer<typeof recordFormSchema>;
 
-const EditRecordPage: FC = () => {
-  const router = useRouter()
+type Props = {
+  startDate?: string;
+  initialPopulation?: number;
+};
+
+export default function EditRecordPage({
+  startDate = new Date().toISOString().split("T")[0],
+  initialPopulation = 1250,
+}: Props) {
+  const today = new Date().toISOString().split("T")[0];
+  const dayAge =
+    Math.floor(
+      (new Date(today).getTime() - new Date(startDate).getTime()) /
+        (1000 * 60 * 60 * 24)
+    ) + 1;
+  const weekAge = Math.ceil(dayAge / 7);
+
+  const [previousRecord, setPreviousRecord] = useState<RecordFormValues>({
+    date: today,
+    day_age: dayAge,
+    week_age: weekAge,
+    previous_population: initialPopulation,
+    feeds_grams: 0,
+    dead: 0,
+    current_population: initialPopulation,
+    medications: [],
+    vaccinations: [],
+  });
+
+  const defaultValues = useMemo<RecordFormValues>(
+    () => ({
+      date: today,
+      day_age: dayAge,
+      week_age: weekAge,
+      previous_population: previousRecord.current_population,
+      feeds_grams: 0,
+      dead: 0,
+      current_population: previousRecord.current_population,
+      medications: [],
+      vaccinations: [],
+    }),
+    [today, dayAge, weekAge, previousRecord.current_population]
+  );
+
   const form = useForm<RecordFormValues>({
-    defaultValues: {
-      date: dummyRecord.date,
-      day_age: dummyRecord.day_age,
-      week_age: dummyRecord.week_age,
-      previous_population: dummyRecord.previous_population,
-      feeds_grams: dummyRecord.feeds_grams,
-      dead: dummyRecord.dead,
-      current_population: dummyRecord.current_population,
-      medications: dummyRecord.medications.map(m => m.name).join(", "),
-      vaccinations: dummyRecord.vaccinations.map(v => v.name).join(", "),
-    },
-  })
+    resolver: zodResolver(recordFormSchema),
+    defaultValues,
+    mode: "onChange",
+  });
 
-  const onSubmit: SubmitHandler<RecordFormValues> = values => {
-    const meds = values.medications
-      .split(",")
-      .map(name => ({
-        name: name.trim(),
-        slug: name.trim().toLowerCase().replace(/\s+/g, "-"),
-      }))
-    const vaxes = values.vaccinations
-      .split(",")
-      .map(name => ({
-        name: name.trim(),
-        slug: name.trim().toLowerCase().replace(/\s+/g, "-"),
-      }))
+  const dead = form.watch("dead");
+  const prevPop = form.watch("previous_population");
+  useEffect(() => {
+    form.setValue("current_population", prevPop - (dead ?? 0), {
+      shouldValidate: true,
+    });
+  }, [dead, prevPop, form]);
 
-    console.log("Submitted record:", {
+  const onSubmit = async (values: RecordFormValues) => {
+    const meds =
+      values.medications
+        ?.map((slug) => medOptions.find((m) => m.value === slug)!)
+        .filter(Boolean) ?? [];
+    const vaxes =
+      values.vaccinations
+        ?.map((slug) => vacOptions.find((v) => v.value === slug)!)
+        .filter(Boolean) ?? [];
+
+    await new Promise((r) => setTimeout(r, 500));
+    console.log("Saving:", { ...values, medications: meds, vaccinations: vaxes });
+
+    setPreviousRecord({
       ...values,
-      medications: meds,
-      vaccinations: vaxes,
-    })
-    router.back()
-  }
+      medications: meds.map((m) => m.value),
+      vaccinations: vaxes.map((v) => v.value),
+    });
+    form.reset(defaultValues);
+  };
+
+  const handleDelete = () => {
+    // TODO: Add deletion logic here (e.g. API call)
+    console.log("Record deleted");
+  };
 
   return (
-    <main className="grid grid-cols-3 gap-6 p-6 bg-gray-50 min-h-screen">
-      {/* Original Data Panel */}
-      <Card className="h-full shadow-sm">
-        <CardHeader className="border-b">
-          <CardTitle>Original Data</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
-            <dt className="text-sm text-gray-600">Date</dt>
-            <dd className="font-medium">{dummyRecord.date}</dd>
-            <dt className="text-sm text-gray-600">Day Age</dt>
-            <dd className="font-medium">{dummyRecord.day_age}</dd>
-            <dt className="text-sm text-gray-600">Week Age</dt>
-            <dd className="font-medium">{dummyRecord.week_age}</dd>
-            <dt className="text-sm text-gray-600">Previous Population</dt>
-            <dd className="font-medium">{dummyRecord.previous_population}</dd>
-          </dl>
-        </CardContent>
-      </Card>
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
+      {/* Previous Data */}
+      <div className="flex-1 p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Previous Data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid grid-cols-2 gap-4 text-sm">
+              {Object.entries(previousRecord).map(([k, v]) => (
+                <React.Fragment key={k}>
+                  <dt className="font-medium">
+                    {k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </dt>
+                  <dd>{Array.isArray(v) ? v.join(", ") : v}</dd>
+                </React.Fragment>
+              ))}
+            </dl>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Edit Form Panel */}
-      <div className="col-span-2">
-        <Card className="shadow-md">
-          <CardHeader className="border-b">
+      {/* Edit Form */}
+      <div className="flex-1 p-6">
+        <Card>
+          <CardHeader>
             <CardTitle>Edit Record</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="grid grid-cols-2 gap-4"
-              >
-                {/* Read-only fields */}
-                {(
-                  [
-                    { name: "date", type: "date" },
-                    { name: "day_age", type: "number" },
-                    { name: "week_age", type: "number" },
-                    { name: "previous_population", type: "number" },
-                    { name: "current_population", type: "number" },
-                  ] as const
-                ).map(fieldDef => (
-                  <FormField
-                    key={fieldDef.name}
-                    control={form.control}
-                    name={fieldDef.name}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          {fieldDef.name.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type={fieldDef.type}
-                            {...field}
-                            disabled
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
+              <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-2 gap-4">
+                {/** auto-filled fields **/}
+                {["date", "day_age", "week_age", "previous_population", "current_population"].map(
+                  (name) => (
+                    <FormField
+                      key={name}
+                      control={form.control}
+                      name={name as any}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type={name === "date" ? "date" : "number"}
+                              disabled
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )
+                )}
 
-                {/* Editable fields */}
+                {/** feeds & dead inputs **/}
                 <FormField
                   control={form.control}
                   name="feeds_grams"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Feeds (grams)</FormLabel>
+                      <FormLabel>Feeds (g)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input
+                          type="number"
+                          value={field.value ?? ''}
+                          onChange={e => field.onChange(parseFloat(e.target.value))}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="dead"
@@ -183,50 +227,88 @@ const EditRecordPage: FC = () => {
                     <FormItem>
                       <FormLabel>Dead</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input
+                          type="number"
+                          value={field.value ?? ''}
+                          onChange={e => field.onChange(parseInt(e.target.value, 10))}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <FormField
+                {/** meds & vaccinations selects **/}
+                <Controller
                   control={form.control}
                   name="medications"
                   render={({ field }) => (
                     <FormItem className="col-span-2">
                       <FormLabel>Medications</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. PureTubig, VitaBoost" {...field} />
+                        <MultiSelect
+                          options={medOptions}
+                          multiple
+                          placeholder="Select medications"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                <FormField
+                <Controller
                   control={form.control}
                   name="vaccinations"
                   render={({ field }) => (
                     <FormItem className="col-span-2">
                       <FormLabel>Vaccinations</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Ma5+clone30" {...field} />
+                        <MultiSelect
+                          options={vacOptions}
+                          multiple
+                          placeholder="Select vaccinations"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Action Buttons */}
-                <CardFooter className="col-span-2 flex justify-end space-x-2">
-                  <Button type="submit">Save Changes</Button>
+                {/** footer with reset, save, delete **/}
+                <CardFooter className="col-span-2 flex flex-col sm:flex-row sm:justify-end flex-wrap gap-2">
                   <Button
-                    type="button"
                     variant="outline"
-                    onClick={() => router.back()}
+                    type="button"
+                    onClick={() => form.reset(defaultValues)}
+                    disabled={form.formState.isSubmitting}
                   >
-                    Cancel
+                    Reset
+                  </Button>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" type="button">Delete</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. Are you sure you want to delete this record?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
                   </Button>
                 </CardFooter>
               </form>
@@ -234,8 +316,6 @@ const EditRecordPage: FC = () => {
           </CardContent>
         </Card>
       </div>
-    </main>
-  )
+    </div>
+  );
 }
-
-export default EditRecordPage
