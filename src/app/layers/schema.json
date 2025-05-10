@@ -2,97 +2,198 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "DailyEggProductionRecord",
   "type": "object",
+  "description": "FDA 21 CFR Part 11–compliant record with versioning, locking, dual e-signatures, role-based control & retention metadata.",
   "properties": {
-    "collection": { "const": "daily_egg_production_records" },
-    "record_id": { "type": "string", "format": "uuid" },
-    "record_date": { "type": "string", "format": "date" },
-    "day_age": { "type": "number", "minimum": 0 },
-    "week_age": { "type": "number", "minimum": 0 },
+    "collection": {
+      "const": "daily_egg_production_records"
+    },
+    "record_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "record_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Incremented on each approved change."
+    },
+    "record_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "day_age": {
+      "type": "integer",
+      "minimum": 0
+    },
     "feed_grams": {
       "type": "number",
-      "minimum": 0,
-      "description": "grams of feed (unit: g)"
+      "minimum": 0
     },
-    "dead_count": { "type": "number", "minimum": 0 },
-    "prev_population": { "type": "number", "minimum": 0 },
-    "curr_population": { "type": "number", "minimum": 0 },
-    "egg_tray_count": {
-      "type": "number",
-      "minimum": 0,
-      "description": "number of full trays"
+    "dead_count": {
+      "type": "integer",
+      "minimum": 0
     },
-    "egg_piece_count": {
-      "type": "number",
-      "minimum": 0,
-      "description": "individual eggs beyond trays"
+    "population": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "total_eggs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tray_size": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 30
     },
     "medications": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string" },
-          "slug": { "type": "string" }
-        },
-        "required": ["name", "slug"]
-      }
+      "items": { "$ref": "#/definitions/medItem" }
     },
     "vaccinations": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string" },
-          "slug": { "type": "string" }
-        },
-        "required": ["name", "slug"]
-      }
+      "items": { "$ref": "#/definitions/vacItem" }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "submitted", "approved", "archived"]
+    },
+    "locked": {
+      "type": "boolean",
+      "description": "True once fully approved; prevents further edits."
     },
     "created_at": { "type": "string", "format": "date-time" },
-    "created_by": { "type": "string" },
+    "created_by": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "created_role": {
+      "type": "string",
+      "enum": ["technician", "supervisor", "admin"]
+    },
     "updated_at": { "type": "string", "format": "date-time" },
-    "updated_by": { "type": "string" },
-    "approved_by": { "type": "string" },
-    "approval_timestamp": { "type": "string", "format": "date-time" },
+    "updated_by": { "type": "string", "format": "uuid" },
+    "updated_role": {
+      "type": "string",
+      "enum": ["technician", "supervisor", "admin"]
+    },
     "change_history": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "changed_at": { "type": "string", "format": "date-time" },
-          "changed_by": { "type": "string" },
-          "changes": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "field": { "type": "string" },
-                "old_value": {},
-                "new_value": {}
-              },
-              "required": ["field", "old_value", "new_value"]
-            }
-          }
-        },
-        "required": ["changed_at", "changed_by", "changes"]
-      }
+      "items": { "$ref": "#/definitions/historyEntry" }
+    },
+    "submission_signature": {
+      "$ref": "#/definitions/signature",
+      "description": "First e-signature when record is submitted."
+    },
+    "approval_signature": {
+      "$ref": "#/definitions/signature",
+      "description": "Final e-signature when record is approved."
+    },
+    "retention_period_years": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "How long (years) the record must be retained."
     }
   },
   "required": [
-    "collection",
-    "record_id",
-    "record_date",
-    "day_age",
-    "week_age",
-    "feed_grams",
-    "dead_count",
-    "prev_population",
-    "curr_population",
-    "egg_tray_count",
-    "egg_piece_count",
-    "medications",
-    "vaccinations",
-    "created_at",
-    "created_by"
-  ]
+    "collection","record_id","record_version","record_date",
+    "day_age","feed_grams","dead_count","population",
+    "total_eggs","tray_size","medications","vaccinations",
+    "status","locked","created_at","created_by","created_role",
+    "submission_signature","retention_period_years"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "medItem": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+$",
+          "minLength": 1
+        }
+      },
+      "required": ["name","slug"],
+      "additionalProperties": false
+    },
+    "vacItem": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+$",
+          "minLength": 1
+        }
+      },
+      "required": ["name","slug"],
+      "additionalProperties": false
+    },
+    "historyEntry": {
+      "type": "object",
+      "properties": {
+        "changed_at": { "type": "string", "format": "date-time" },
+        "changed_by": { "type": "string", "format": "uuid" },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": { "type": "string" },
+              "old_value": {},
+              "new_value": {}
+            },
+            "required": ["field","old_value","new_value"],
+            "additionalProperties": false
+          }
+        },
+        "e_signature": { "$ref": "#/definitions/signature" }
+      },
+      "required": ["changed_at","changed_by","changes","e_signature"],
+      "additionalProperties": false
+    },
+    "e_signature": {
+      "type": "object",
+      "properties": {
+        "signed_by": { "type": "string", "format": "uuid" },
+        "printed_name":{ "type": "string", "minLength": 1 },
+        "signed_at": { "type": "string", "format": "date-time" },
+        "role": {
+          "type": "string",
+          "enum": ["technician","supervisor","manager","qa","admin"]
+        },
+        "signature_reason": {
+          "type": "string",
+          "enum": ["submission","approval","correction"]
+        },
+        "meaning": { "type": "string" },
+        "hash_algorithm": {
+          "type": "string",
+          "enum": ["SHA-256","SHA-384","SHA-512"]
+        },
+        "signature_hash": {
+          "type": "string",
+          "pattern": "^[0-9A-Fa-f]{64,128}$"
+        },
+        "certificate_id": {
+          "type": "string",
+          "description": "Digital certificate serial number."
+        },
+        "certificate_issuer": {
+          "type": "string",
+          "description": "Authority issuing the certificate."
+        },
+        "certificate_valid_until": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "signed_by","printed_name","signed_at","role",
+        "signature_reason","meaning","hash_algorithm","signature_hash",
+        "certificate_id","certificate_issuer","certificate_valid_until"
+      ],
+      "additionalProperties": false
+    }
+  }
 }
