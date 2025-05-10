@@ -5,7 +5,7 @@ import {
 
   IconInnerShadowTop,
   IconEggs,
-  IconGrowth
+  IconFeather
 
 
 } from "@tabler/icons-react"
@@ -28,25 +28,16 @@ const data = {
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
-    {
-      title: "Input",
-      url: "/input",
-      icon: IconGrowth,
-    },
-    {
-      title: "Output",
-      url: "/output",
-      icon: IconEggs,
-    },
-    {
-      title: "Vaccination",
-      url: "/vaccination",
-      icon: IconEggs,
-    },
+
     {
       title: "Growers",
       url: "/growers",
       icon: IconEggs,
+    },
+    {
+      title: "Layers",
+      url: "/layers",
+      icon: IconFeather,
     }
 
 

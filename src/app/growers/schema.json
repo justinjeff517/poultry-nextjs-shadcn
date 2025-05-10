@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DailyPulletRecord",
+  "type": "object",
+  "properties": {
+    "collection": {
+      "const": "daily_pullet_records"
+    },
+    "record_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "record_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "day_age": {
+      "type": "number",
+      "minimum": 0
+    },
+    "week_age": {
+      "type": "number",
+      "minimum": 0
+    },
+    "feed_grams": {
+      "type": "number",
+      "minimum": 0,
+      "description": "grams of feed (unit: g)"
+    },
+    "dead_count": {
+      "type": "number",
+      "minimum": 0
+    },
+    "prev_population": {
+      "type": "number",
+      "minimum": 0
+    },
+    "curr_population": {
+      "type": "number",
+      "minimum": 0
+    },
+    "medications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "slug": { "type": "string" }
+        },
+        "required": ["name", "slug"]
+      }
+    },
+    "vaccinations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "slug": { "type": "string" }
+        },
+        "required": ["name", "slug"]
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_by": {
+      "type": "string"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approval_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "change_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "changed_at": { "type": "string", "format": "date-time" },
+          "changed_by": { "type": "string" },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": { "type": "string" },
+                "old_value": {},
+                "new_value": {}
+              },
+              "required": ["field", "old_value", "new_value"]
+            }
+          }
+        },
+        "required": ["changed_at", "changed_by", "changes"]
+      }
+    }
+  },
+  "required": [
+    "collection",
+    "record_id",
+    "record_date",
+    "day_age",
+    "week_age",
+    "feed_grams",
+    "dead_count",
+    "prev_population",
+    "curr_population",
+    "medications",
+    "vaccinations",
+    "created_at",
+    "created_by"
+  ]
+}
