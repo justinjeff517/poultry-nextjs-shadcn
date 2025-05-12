@@ -1,6 +1,8 @@
+// src/app/daily-pullet-records/page.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useSession } from "next-auth/react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -29,7 +31,6 @@ const medOptions = [
   { value: "amoxicillin", label: "Amoxicillin" },
   { value: "oxytetracycline", label: "Oxytetracycline" },
 ];
-
 const vacOptions = [
   { value: "nd-b1", label: "ND B1" },
   { value: "ib-h120", label: "IB H120" },
@@ -58,6 +59,7 @@ export default function Page({
   startDate = new Date().toISOString().split("T")[0],
   initialPopulation = 1250,
 }: Props) {
+  const { data: session } = useSession();
   const today = new Date().toISOString().split("T")[0];
   const dayAge =
     Math.floor(
@@ -99,6 +101,7 @@ export default function Page({
     mode: "onChange",
   });
 
+  // auto‐recalculate current_population
   const dead = form.watch("dead");
   const prevPop = form.watch("previous_population");
   useEffect(() => {
@@ -107,32 +110,48 @@ export default function Page({
     });
   }, [dead, prevPop, form]);
 
-  const onSubmit = async (values: RecordFormValues) => {
-    //log data
-    console.log(values);
-    const meds =
-      values.medications
-        ?.map((slug) => medOptions.find((m) => m.value === slug)!)
-        .filter(Boolean) ?? [];
-    const vaxes =
-      values.vaccinations
-        ?.map((slug) => vacOptions.find((v) => v.value === slug)!)
-        .filter(Boolean) ?? [];
+  const onSubmit = (values: RecordFormValues) => {
+    const payload = {
+      collection: "daily_pullet_records",
+      record_date: values.date,
+      day_age: values.day_age,
+      week_age: values.week_age,
+      feed_grams: values.feeds_grams,
+      dead_count: values.dead,
+      prev_population: values.previous_population,
+      curr_population: values.current_population,
+      medications:
+        values.medications?.map((slug) => {
+          const opt = medOptions.find((m) => m.value === slug)!;
+          return { name: opt.label, slug: opt.value };
+        }) ?? [],
+      vaccinations:
+        values.vaccinations?.map((slug) => {
+          const opt = vacOptions.find((v) => v.value === slug)!;
+          return { name: opt.label, slug: opt.value };
+        }) ?? [],
+    };
 
-    await new Promise((r) => setTimeout(r, 500));
-    console.log({ ...values, medications: meds, vaccinations: vaxes });
+    console.log("Submitting payload for testing:", payload);
 
     setPreviousRecord({
-      ...values,
-      medications: meds.map((m) => m.value),
-      vaccinations: vaxes.map((v) => v.value),
+      date: payload.record_date,
+      day_age: payload.day_age,
+      week_age: payload.week_age,
+      feeds_grams: payload.feed_grams,
+      dead: payload.dead_count,
+      previous_population: payload.prev_population,
+      current_population: payload.curr_population,
+      medications: payload.medications.map((m) => m.slug),
+      vaccinations: payload.vaccinations.map((v) => v.slug),
     });
+
     form.reset(defaultValues);
   };
 
+
   return (
     <div className="flex">
-      {/* Previous Data */}
       <div className="flex-1 p-4">
         <Card>
           <CardHeader>
@@ -145,17 +164,13 @@ export default function Page({
                   <dt className="font-medium">
                     {k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}:
                   </dt>
-                  <dd>
-                    {Array.isArray(v) ? v.join(", ") : v ?? "—"}
-                  </dd>
+                  <dd>{Array.isArray(v) ? v.join(", ") : v ?? "—"}</dd>
                 </React.Fragment>
               ))}
             </dl>
           </CardContent>
         </Card>
       </div>
-
-      {/* Add New Record */}
       <div className="flex-1 p-4">
         <Card>
           <CardHeader>
@@ -163,72 +178,68 @@ export default function Page({
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="grid grid-cols-2 gap-4"
-              >
-                {/* Auto-filled fields */}
-                {["date","day_age","week_age","previous_population","current_population"].map((name) => (
-                  <FormField
-                    key={name}
-                    control={form.control}
-                    name={name as any}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          {name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type={name === "date" ? "date" : "number"}
-                            disabled
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
+              <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-2 gap-4">
+                {["date", "day_age", "week_age", "previous_population", "current_population"].map(
+                  (name) => (
+                    <FormField
+                      key={name}
+                      control={form.control}
+                      name={name as any}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type={name === "date" ? "date" : "number"}
+                              disabled
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )
+                )}
 
-                {/* User inputs */}
-<FormField
-  control={form.control}
-  name="feeds_grams"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Feeds (g)</FormLabel>
-      <FormControl>
-        <Input
-          type="number"
-          value={field.value ?? ''}
-          onChange={e => field.onChange(parseFloat(e.target.value))}
-        />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
+                <FormField
+                  control={form.control}
+                  name="feeds_grams"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Feeds (g)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-<FormField
-  control={form.control}
-  name="dead"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Dead</FormLabel>
-      <FormControl>
-        <Input
-          type="number"
-          value={field.value ?? ''}
-          onChange={e => field.onChange(parseInt(e.target.value, 10))}
-        />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
+                <FormField
+                  control={form.control}
+                  name="dead"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dead</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                {/* Medications */}
                 <Controller
                   control={form.control}
                   name="medications"
@@ -249,7 +260,6 @@ export default function Page({
                   )}
                 />
 
-                {/* Vaccinations */}
                 <Controller
                   control={form.control}
                   name="vaccinations"
@@ -259,7 +269,6 @@ export default function Page({
                       <FormControl>
                         <MultiSelect
                           options={vacOptions}
-                 
                           placeholder="Select vaccinations"
                           value={field.value}
                           onValueChange={field.onChange}
@@ -270,7 +279,6 @@ export default function Page({
                   )}
                 />
 
-                {/* Actions */}
                 <CardFooter className="col-span-2 flex justify-end gap-2">
                   <Button
                     variant="outline"
