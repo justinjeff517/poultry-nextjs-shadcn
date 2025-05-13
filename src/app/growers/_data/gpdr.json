@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DailyPulletRecord",
+  "type": "object",
+  "description": "Daily record of pullet (young hen) management, including population, feed, health, and electronic signature for compliance.",
+  "properties": {
+    "collection": {
+      "const": "daily_pullet_records",
+      "description": "Identifier for the collection storing these records."
+    },
+    "record_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the record."
+    },
+
+
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the record was created."
+    },
+    "created_by": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID of the user who created the record."
+    },
+    "change_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "changed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC timestamp of the change."
+          },
+          "changed_by": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the user who made the change."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string",
+                  "description": "Name of the field that was changed."
+                },
+                "old_value": {
+                  "oneOf": [
+                    {"type": "null"},
+                    {"type": "string"},
+                    {"type": "number"},
+                    {"type": "array"},
+                    {"type": "object"}
+                  ],
+                  "description": "Previous value of the field."
+                },
+                "new_value": {
+                  "oneOf": [
+                    {"type": "null"},
+                    {"type": "string"},
+                    {"type": "number"},
+                    {"type": "array"},
+                    {"type": "object"}
+                  ],
+                  "description": "New value of the field."
+                }
+              },
+              "required": ["field", "old_value", "new_value"],
+              "additionalProperties": false
+            },
+            "description": "List of changes made to the record."
+          }
+        },
+        "required": ["changed_at", "changed_by", "changes"],
+        "additionalProperties": false
+      },
+      "description": "History of updates to the record, including who made changes and what was changed."
+    },
+    "e_signature": {
+      "type": "object",
+      "properties": {
+        "signed_by": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the user who signed the record."
+        },
+        "signed_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp when the record was signed."
+        },
+        "signature_reason": {
+          "type": "string",
+          "enum": ["submission", "approval", "correction"],
+          "description": "Purpose of the signature (e.g., submission, approval, correction)."
+        },
+        "signature_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{64}$",
+          "description": "SHA-256 hash of the record content (excluding e_signature) to ensure integrity."
+        }
+      },
+      "required": ["signed_by", "signed_at", "signature_reason", "signature_hash"],
+      "additionalProperties": false,
+      "description": "Electronic signature details for data integrity and compliance."
+    }
+  },
+  "required": [
+    "collection",
+    "record_id",
+    "record_date",
+    "day_age",
+    "week_age",
+    "feed_grams",
+    "dead_count",
+    "prev_population",
+    "curr_population",
+    "medications",
+    "vaccinations",
+    "created_at",
+    "created_by",
+    "e_signature"
+  ],
+  "additionalProperties": false
+}

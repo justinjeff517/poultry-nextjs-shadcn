@@ -1,0 +1,180 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DailyLayerFlockRecord",
+  "type": "object",
+  "description": "Integrated daily record for a single flock, combining pullet management and egg‐production, with full audit, dual e-signatures, role control, versioning, and retention metadata.",
+  "properties": {
+    "collection": {
+      "const": "daily_egg_production_records"
+    },
+    "record_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "record_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Incremented on each approved change."
+    },
+    "record_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "day_age": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "feed_grams": {
+      "type": "number",
+      "minimum": 0
+    },
+    "dead_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "population": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "egg_production": {
+      "type": "object",
+      "description": "Daily egg count metrics.",
+      "properties": {
+        "total_eggs": { "type": "integer", "minimum": 0 },
+        "tray_size":  { "type": "integer", "minimum": 1, "default": 30 }
+      },
+      "required": ["total_eggs"],
+      "additionalProperties": false
+    },
+
+
+    "medications": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/medItem" }
+    },
+    "vaccinations": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/vacItem" }
+    },
+
+
+    "created_at": { "type": "string", "format": "date-time" },
+    "created_by": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "updated_by": { "type": "string", "format": "uuid" },
+    "updated_role": {
+      "type": "string",
+      "enum": ["technician", "supervisor", "admin"]
+    },
+    "change_history": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/historyEntry" }
+    },
+    "submission_signature": {
+      "$ref": "#/definitions/signature",
+      "description": "First e-signature when record is submitted."
+    },
+    "approval_signature": {
+      "$ref": "#/definitions/signature",
+      "description": "Final e-signature when record is approved."
+    },
+    "retention_period_years": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "How long (years) the record must be retained."
+    }
+  },
+  "required": [
+    "collection","record_id","record_version","record_date",
+    "day_age","feed_grams","dead_count","population",
+    "total_eggs","tray_size","medications","vaccinations",
+    "status","locked","created_at","created_by","created_role",
+    "submission_signature","retention_period_years"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "medItem": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+$",
+          "minLength": 1
+        }
+      },
+      "required": ["name","slug"],
+      "additionalProperties": false
+    },
+    "vacItem": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+$",
+          "minLength": 1
+        }
+      },
+      "required": ["name","slug"],
+      "additionalProperties": false
+    },
+    "change_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "changed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "changed_by": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": { "type": "string" },
+                "old_value": { "type": "string" },
+                "new_value": { "type": "string" }
+              },
+              "required": ["field", "old_value", "new_value"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["changed_at", "changed_by", "changes"],
+        "additionalProperties": false
+      }
+    },
+    "e_signature": {
+      "type": "object",
+      "properties": {
+        "signed_by": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "signed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "signature_reason": {
+          "type": "string",
+          "enum": ["creation", "update", "deactivation"]
+        },
+        "signature_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{64}$"
+        }
+      },
+      "required": ["signed_by", "signed_at", "signature_reason", "signature_hash"],
+      "additionalProperties": false
+    }
+  }
+}
