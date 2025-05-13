@@ -1,0 +1,154 @@
+{
+  "schema": [
+    {
+      "data": {
+
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the record."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the record (YYYY-MM-DD)."
+        },
+        "day_age": {
+          "type": "integer",
+          "description": "Age of the pullet flock in days."
+        },
+        "week_age": {
+          "type": "integer",
+          "description": "Age of the pullet flock in weeks, derived from day_age."
+        },
+        "feed_sacks": {
+          "type": "integer",
+          "description": "Number of feed sacks consumed."
+        },
+        "feed_grams": {
+          "type": "number",
+          "description": "Amount of feed consumed in grams."
+        },
+        "dead": {
+          "type": "integer",
+          "description": "Number of dead pullets."
+        },
+        "previous_population": {
+          "type": "integer",
+          "description": "Previous population of pullets."
+        },
+        "current_population": {
+          "type": "integer",
+          "description": "Current population of pullets."
+        },
+        "medications": {
+          "description": "List of medications administered to the flock.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Unique identifier for the medication."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Name of the medication administered."
+              }
+            }
+          }
+        },
+        "vaccinations": {
+          "description": "List of vaccinations administered to the flock.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Unique identifier for the vaccination."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Name of the vaccination administered."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "metadata": {
+        "mongodb":{
+            "collection":"daily_layer_record",
+            "database":"poultry"
+        },
+   
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp when the record was created."
+        },
+        "created_by": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the user who created the record."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp when the record was last updated."
+        },
+        "updated_by": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the user who last updated the record."
+        },
+        "change_history": {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+            "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the change occurred."
+            },
+            "user_id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Who made the change."
+            },
+            "changes": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "field": {
+                            "type": "string",
+                            "description": "Name of the field changed."
+                        },
+                        "old": {
+                            "type": ["null","string","number","array","object"],
+                            "description": "Previous value."
+                        },
+                        "new": {
+                            "type": ["null","string","number","array","object"],
+                            "description": "New value."
+                        }
+                    },
+                    "required": ["field","old","new"]
+                }
+            }
+            },
+            "required": ["timestamp","user_id","changes"]
+        }
+        }
+
+
+      }
+    }
+  ]
+}
