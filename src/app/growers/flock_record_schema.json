@@ -97,6 +97,10 @@
           "type": "string",
           "format": "uuid",
           "description": "UUID of the user who created the record."
+        },
+        "text_summary":{
+          "type": "string",
+          "description": "Text summary of the record."
         }
       }
     },

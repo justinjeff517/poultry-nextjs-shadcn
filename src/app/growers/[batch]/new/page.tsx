@@ -5,6 +5,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { v4 as uuidv4 } from "uuid";
 import * as z from "zod";
 
 import {
@@ -24,6 +25,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { MultiSelect } from "@/components/multi-select";
 
 const medOptions = [
@@ -47,6 +57,7 @@ const recordFormSchema = z.object({
   current_population: z.number().min(0),
   medications: z.array(z.string()).optional(),
   vaccinations: z.array(z.string()).optional(),
+  text_summary: z.string().nonempty("Summary is required"),
 });
 type RecordFormValues = z.infer<typeof recordFormSchema>;
 
@@ -76,8 +87,9 @@ export default function Page({
     dead: 0,
     previous_population: initialPopulation,
     current_population: initialPopulation,
-    medications: [],
-    vaccinations: [],
+    medications: ["tylosin", "oxytetracycline"],    // ← dummy meds
+    vaccinations: ["nd-b1", "marek"],               // ← dummy vax
+    text_summary: "This is a dummy AI-generated summary for now.",
   });
 
   const defaultValues = useMemo<RecordFormValues>(
@@ -91,6 +103,7 @@ export default function Page({
       current_population: previousRecord.current_population,
       medications: [],
       vaccinations: [],
+      text_summary: "This is a dummy AI-generated summary for now.",
     }),
     [today, dayAge, weekAge, previousRecord.current_population]
   );
@@ -101,7 +114,7 @@ export default function Page({
     mode: "onChange",
   });
 
-  // auto‐recalculate current_population
+  // auto-recalculate current_population
   const dead = form.watch("dead");
   const prevPop = form.watch("previous_population");
   useEffect(() => {
@@ -110,44 +123,50 @@ export default function Page({
     });
   }, [dead, prevPop, form]);
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const onSubmit = (values: RecordFormValues) => {
+    const now = new Date().toISOString()
+    const userId = session?.user?.id ?? ""
+
     const payload = {
-      collection: "daily_pullet_records",
-      record_date: values.date,
-      day_age: values.day_age,
-      week_age: values.week_age,
-      feed_grams: values.feeds_grams,
-      dead_count: values.dead,
-      prev_population: values.previous_population,
-      curr_population: values.current_population,
-      medications:
-        values.medications?.map((slug) => {
-          const opt = medOptions.find((m) => m.value === slug)!;
-          return { name: opt.label, slug: opt.value };
+      data: {
+        record_id: uuidv4(),
+        record_date: values.date,               // YYYY-MM-DD
+        day_age: values.day_age,                // 0–365
+        week_age: values.week_age,              // 0–52
+        feed_grams: values.feeds_grams,         // number ≥ 0
+        dead_count: values.dead,                // integer ≥ 0
+        prev_population: values.previous_population,
+        curr_population: values.current_population,
+        medications: values.medications?.map(slug => {
+          const opt = medOptions.find(m => m.value === slug)!
+          return { name: opt.label, slug: opt.value }
         }) ?? [],
-      vaccinations:
-        values.vaccinations?.map((slug) => {
-          const opt = vacOptions.find((v) => v.value === slug)!;
-          return { name: opt.label, slug: opt.value };
+        vaccinations: values.vaccinations?.map(slug => {
+          const opt = vacOptions.find(v => v.value === slug)!
+          return { name: opt.label, slug: opt.value }
         }) ?? [],
-    };
+        text_summary: values.text_summary,
+        created_at: now,       // date-time
+        created_by: userId     // uuid
+      },
+      metadata: {
+        mongodb: {
+          collection: "daily_layer_record",
+          database: "poultry"
+        },
+        created_at: now,       // date-time
+        created_by: userId,    // uuid
+        updated_at: now,       // date-time
+        updated_by: userId,    // uuid
+        change_history: []     // initially empty
+      }
+    }
 
-    console.log("Submitting payload for testing:", payload);
+    console.log("Submitting payload:", payload)
 
-    setPreviousRecord({
-      date: payload.record_date,
-      day_age: payload.day_age,
-      week_age: payload.week_age,
-      feeds_grams: payload.feed_grams,
-      dead: payload.dead_count,
-      previous_population: payload.prev_population,
-      current_population: payload.curr_population,
-      medications: payload.medications.map((m) => m.slug),
-      vaccinations: payload.vaccinations.map((v) => v.slug),
-    });
-
-    form.reset(defaultValues);
-  };
+  }
 
 
   return (
@@ -162,7 +181,10 @@ export default function Page({
               {Object.entries(previousRecord).map(([k, v]) => (
                 <React.Fragment key={k}>
                   <dt className="font-medium">
-                    {k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}:
+                    {k
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase())}
+                    :
                   </dt>
                   <dd>{Array.isArray(v) ? v.join(", ") : v ?? "—"}</dd>
                 </React.Fragment>
@@ -171,6 +193,7 @@ export default function Page({
           </CardContent>
         </Card>
       </div>
+
       <div className="flex-1 p-4">
         <Card>
           <CardHeader>
@@ -178,31 +201,37 @@ export default function Page({
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-2 gap-4">
-                {["date", "day_age", "week_age", "previous_population", "current_population"].map(
-                  (name) => (
-                    <FormField
-                      key={name}
-                      control={form.control}
-                      name={name as any}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            {name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type={name === "date" ? "date" : "number"}
-                              disabled
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )
-                )}
+              <form className="grid grid-cols-2 gap-4">
+                {[
+                  "date",
+                  "day_age",
+                  "week_age",
+                  "previous_population",
+                  "current_population",
+                ].map((name) => (
+                  <FormField
+                    key={name}
+                    control={form.control}
+                    name={name as any}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {name
+                            .replace(/_/g, " ")
+                            .replace(/\b\w/g, (c) => c.toUpperCase())}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type={name === "date" ? "date" : "number"}
+                            disabled
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
 
                 <FormField
                   control={form.control}
@@ -214,7 +243,9 @@ export default function Page({
                         <Input
                           type="number"
                           value={field.value ?? ""}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(parseFloat(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -232,7 +263,9 @@ export default function Page({
                         <Input
                           type="number"
                           value={field.value ?? ""}
-                          onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value, 10))
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -288,9 +321,51 @@ export default function Page({
                   >
                     Reset
                   </Button>
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Submitting..." : "Add Record"}
-                  </Button>
+
+                  <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        type="button"
+                        onClick={() => setConfirmOpen(true)}
+                        disabled={form.formState.isSubmitting}
+                      >
+                        Add Record
+                      </Button>
+                    </DialogTrigger>
+
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Confirm Create Record</DialogTitle>
+                        <DialogDescription>
+                          Are you sure you want to create this record?
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <Card className="mt-4">
+                        <CardHeader className="border-b">
+                          <CardTitle className="text-sm font-semibold text-gray-800">
+                            AI-Generated Summary
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <p className="text-sm text-gray-600">
+                            {form.getValues("text_summary")}
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      <DialogFooter className="mt-6 flex justify-end space-x-2">
+                        <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={() => form.handleSubmit(onSubmit)()}>
+                          Confirm
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+
+
+                  </Dialog>
                 </CardFooter>
               </form>
             </Form>

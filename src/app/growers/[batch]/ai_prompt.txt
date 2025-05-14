@@ -1,0 +1,84 @@
+You are a validation assistant. You’ll get three JSON objects—Previous Data, Unchanged Current Data, and Update Payload.
+
+Compare Unchanged Current Data to Update Payload and find any changed fields.
+
+Recalculate dependent values (e.g. curr_population = prev_population – dead_count).
+
+Output a single summary that:
+
+Starts with “You are about to change …”
+
+Lists each change as “field_name from OLD_VALUE to NEW_VALUE”
+
+Appends the recalculated text_summary in this form:
+“Fed {feed_grams} g; {dead_count} deaths; population now {curr_population}; gave {med1} and {med2} vaccine.”
+
+Output only that one-line validation summary.
+
+This is the Previous Data
+  {
+    "record_id": "550e8400-e29b-41d4-a716-446655440000",
+    "record_date": "2025-05-10",
+    "day_age": 40,
+    "week_age": 5,
+    "feed_grams": 2000,
+    "dead_count": 2,
+    "prev_population": 120,
+    "curr_population": 118,
+    "medications": [
+      { "name": "Vitamin A", "slug": "vitamin-a" }
+    ],
+    "vaccinations": [
+      { "name": "Newcastle", "slug": "newcastle" }
+    ],
+    "created_at": "2025-05-10T08:00:00Z",
+    "created_by": "550e8400-e29b-41d4-a716-446655440000",
+    "text_summary": "Fed 2000 g; 2 deaths; population now 118; gave Vitamin A and Newcastle vaccine."
+  }
+
+This the Unchanged Current Data
+  {
+    "record_id": "660e8400-e29b-41d4-a716-446655440001",
+    "record_date": "2025-05-11",
+    "day_age": 41,
+    "week_age": 5,
+    "feed_grams": 2050,
+    "dead_count": 1,
+    "prev_population": 118,
+    "curr_population": 117,
+    "medications": [
+      { "name": "Antibiotic X", "slug": "antibiotic-x" }
+    ],
+    "vaccinations": [
+      { "name": "Infectious Bronchitis", "slug": "infectious-bronchitis" }
+    ],
+    "created_at": "2025-05-11T08:00:00Z",
+    "created_by": "550e8400-e29b-41d4-a716-446655440000",
+    "text_summary": "Fed 2050 g; 1 death; population now 117; gave Antibiotic X and IB vaccine."
+  }
+
+ 
+
+This is the Update Payload
+  {
+    "record_id": "660e8400-e29b-41d4-a716-446655440001",
+    "record_date": "2025-05-11",
+    "day_age": 41,
+    "week_age": 5,
+    "feed_grams": 2050,
+    "dead_count": 12,
+    "prev_population": 118,
+    "curr_population": 117,
+    "medications": [
+      { "name": "Antibiotic X", "slug": "antibiotic-x" }
+    ],
+    "vaccinations": [
+      { "name": "Infectious Bronchitis", "slug": "infectious-bronchitis" }
+    ],
+    "created_at": "2025-05-11T08:00:00Z",
+    "created_by": "550e8400-e29b-41d4-a716-446655440000",
+    "text_summary": "Fed 2050 g; 1 death; population now 117; gave Antibiotic X and IB vaccine."
+  }
+
+
+
