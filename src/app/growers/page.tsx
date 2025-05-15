@@ -31,7 +31,7 @@ export default function Page() {
               <p>Slug: {batch.slug}</p>
               <p>Breed: {batch.breed}</p>
               <Button asChild className="mt-4">
-                <Link href={`/growers/${batch.slug}/new`}>Select</Link>
+                <Link href={`/growers/${batch.slug}`}>Select</Link>
               </Button>
             </CardContent>
           </Card>

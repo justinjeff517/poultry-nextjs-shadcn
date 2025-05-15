@@ -1,5 +1,4 @@
 "use client";
-
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -20,138 +19,138 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface RecordType {
-  record_id: string;
-  record_date: string;
+  id: string;
+  date: string;
   day_age: number;
   week_age: number;
-  feed_grams: number;
-  dead_count: number;
-  prev_population: number;
-  curr_population: number;
-  medications: { name: string; slug: string }[];
-  vaccinations: { name: string; slug: string }[];
+  feeds_grams: number;
+  dead: number;
+  previous_population: number;
+  current_population: number;
+  medications: { name: string }[];
+  vaccinations: { name: string }[];
 }
 
 const sampleData: RecordType[] = [
   {
-    record_id: "1",
-    record_date: "2025-04-29",
+    id: "1",
+    date: "2025-04-29",
     day_age: 1,
     week_age: 1,
-    feed_grams: 1500,
-    dead_count: 0,
-    prev_population: 2000,
-    curr_population: 2000,
-    medications: [{ name: "PureTubig", slug: "puretubig" }],
-    vaccinations: [{ name: "Ma5+clone30", slug: "ma5_clone30" }],
+    feeds_grams: 1500,
+    dead: 0,
+    previous_population: 2000,
+    current_population: 2000,
+    medications: [{ name: "PureTubig" }],
+    vaccinations: [{ name: "Ma5+clone30" }],
   },
   {
-    record_id: "2",
-    record_date: "2025-04-30",
+    id: "2",
+    date: "2025-04-30",
     day_age: 2,
     week_age: 1,
-    feed_grams: 1600,
-    dead_count: 2,
-    prev_population: 2000,
-    curr_population: 1998,
-    medications: [{ name: "VitaBoost", slug: "vitaboost" }],
+    feeds_grams: 1600,
+    dead: 2,
+    previous_population: 2000,
+    current_population: 1998,
+    medications: [{ name: "VitaBoost" }],
     vaccinations: [],
   },
   {
-    record_id: "3",
-    record_date: "2025-05-01",
+    id: "3",
+    date: "2025-05-01",
     day_age: 3,
     week_age: 1,
-    feed_grams: 1650,
-    dead_count: 1,
-    prev_population: 1998,
-    curr_population: 1997,
+    feeds_grams: 1650,
+    dead: 1,
+    previous_population: 1998,
+    current_population: 1997,
     medications: [],
     vaccinations: [],
   },
   {
-    record_id: "4",
-    record_date: "2025-05-02",
+    id: "4",
+    date: "2025-05-02",
     day_age: 4,
     week_age: 1,
-    feed_grams: 1620,
-    dead_count: 0,
-    prev_population: 1997,
-    curr_population: 1997,
+    feeds_grams: 1620,
+    dead: 0,
+    previous_population: 1997,
+    current_population: 1997,
     medications: [],
     vaccinations: [],
   },
   {
-    record_id: "5",
-    record_date: "2025-05-03",
+    id: "5",
+    date: "2025-05-03",
     day_age: 5,
     week_age: 1,
-    feed_grams: 1580,
-    dead_count: 1,
-    prev_population: 1997,
-    curr_population: 1996,
-    medications: [{ name: "Electrolytes", slug: "electrolytes" }],
+    feeds_grams: 1580,
+    dead: 1,
+    previous_population: 1997,
+    current_population: 1996,
+    medications: [{ name: "Electrolytes" }],
     vaccinations: [],
   },
   {
-    record_id: "6",
-    record_date: "2025-05-04",
+    id: "6",
+    date: "2025-05-04",
     day_age: 6,
     week_age: 1,
-    feed_grams: 1550,
-    dead_count: 0,
-    prev_population: 1996,
-    curr_population: 1996,
+    feeds_grams: 1550,
+    dead: 0,
+    previous_population: 1996,
+    current_population: 1996,
     medications: [],
     vaccinations: [],
   },
   {
-    record_id: "7",
-    record_date: "2025-05-05",
+    id: "7",
+    date: "2025-05-05",
     day_age: 7,
     week_age: 1,
-    feed_grams: 1575,
-    dead_count: 1,
-    prev_population: 1996,
-    curr_population: 1995,
+    feeds_grams: 1575,
+    dead: 1,
+    previous_population: 1996,
+    current_population: 1995,
     medications: [],
     vaccinations: [],
   },
   {
-    record_id: "8",
-    record_date: "2025-05-06",
+    id: "8",
+    date: "2025-05-06",
     day_age: 8,
     week_age: 2,
-    feed_grams: 1620,
-    dead_count: 0,
-    prev_population: 1995,
-    curr_population: 1995,
-    medications: [{ name: "AquaZinc", slug: "aquazinc" }],
+    feeds_grams: 1620,
+    dead: 0,
+    previous_population: 1995,
+    current_population: 1995,
+    medications: [{ name: "AquaZinc" }],
     vaccinations: [],
   },
   {
-    record_id: "9",
-    record_date: "2025-05-07",
+    id: "9",
+    date: "2025-05-07",
     day_age: 9,
     week_age: 2,
-    feed_grams: 1650,
-    dead_count: 0,
-    prev_population: 1995,
-    curr_population: 1995,
+    feeds_grams: 1650,
+    dead: 0,
+    previous_population: 1995,
+    current_population: 1995,
     medications: [],
     vaccinations: [],
   },
   {
-    record_id: "10",
-    record_date: "2025-05-08",
+    id: "10",
+    date: "2025-05-08",
     day_age: 10,
     week_age: 2,
-    feed_grams: 1700,
-    dead_count: 2,
-    prev_population: 1995,
-    curr_population: 1993,
+    feeds_grams: 1700,
+    dead: 2,
+    previous_population: 1995,
+    current_population: 1993,
     medications: [],
-    vaccinations: [{ name: "IB+ND", slug: "ib_nd" }],
+    vaccinations: [{ name: "IB+ND" }],
   },
 ];
 
@@ -180,7 +179,7 @@ export default function Page() {
             <TableHead>Day Age</TableHead>
             <TableHead>Week Age</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead>Feed (g)</TableHead>
+            <TableHead>Feeds (g)</TableHead>
             <TableHead>Dead</TableHead>
             <TableHead>Prev Pop</TableHead>
             <TableHead>Curr Pop</TableHead>
@@ -191,20 +190,16 @@ export default function Page() {
         </TableHeader>
         <TableBody>
           {sortedData.map((r) => (
-            <TableRow key={r.record_id}>
+            <TableRow key={r.id}>
               <TableCell>{r.day_age}</TableCell>
               <TableCell>{r.week_age}</TableCell>
-              <TableCell>{r.record_date}</TableCell>
-              <TableCell>{r.feed_grams}</TableCell>
-              <TableCell>{r.dead_count}</TableCell>
-              <TableCell>{r.prev_population}</TableCell>
-              <TableCell>{r.curr_population}</TableCell>
-              <TableCell>
-                {r.medications.map((m) => m.name).join(", ")}
-              </TableCell>
-              <TableCell>
-                {r.vaccinations.map((v) => v.name).join(", ")}
-              </TableCell>
+              <TableCell>{r.date}</TableCell>
+              <TableCell>{r.feeds_grams}</TableCell>
+              <TableCell>{r.dead}</TableCell>
+              <TableCell>{r.previous_population}</TableCell>
+              <TableCell>{r.current_population}</TableCell>
+              <TableCell>{r.medications.map((m) => m.name).join(", ")}</TableCell>
+              <TableCell>{r.vaccinations.map((v) => v.name).join(", ")}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -215,9 +210,7 @@ export default function Page() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>View</DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href={`/growers/${slug}/${r.record_id}`}>
-                        Modify
-                      </Link>
+                      <Link href={`/growers/${slug}/${r.id}`}>Modify</Link>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

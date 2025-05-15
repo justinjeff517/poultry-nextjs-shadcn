@@ -1,0 +1,176 @@
+{
+  "schema": [
+    {
+      "data": {
+        "record_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the record."
+        },
+        "record_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of the record (YYYY-MM-DD)."
+        },
+        "day_age": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 365,
+          "description": "Age of the pullet flock in days."
+        },
+        "week_age": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 52,
+          "description": "Age of the pullet flock in weeks, derived from day_age."
+        },
+        "feed_grams": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Total grams of feed consumed by the flock (unit: g)."
+        },
+        "dead_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of pullets that died on the record date."
+        },
+        "prev_population": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Flock population at the start of the record date (before deaths)."
+        },
+        "curr_population": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Flock population at the end of the record date (after deaths)."
+        },
+        "medications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Name of the medication administered."
+              },
+              "slug": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9_-]+$",
+                "description": "Unique identifier for the medication (lowercase, alphanumeric, hyphens, or underscores)."
+              }
+            },
+            "required": ["name", "slug"],
+            "additionalProperties": false
+          },
+          "description": "List of medications administered to the flock."
+        },
+        "vaccinations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Name of the vaccination administered."
+              },
+              "slug": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9_-]+$",
+                "description": "Unique identifier for the vaccination (lowercase, alphanumeric, hyphens, or underscores)."
+              }
+            },
+            "required": ["name", "slug"],
+            "additionalProperties": false
+          },
+          "description": "List of vaccinations administered to the flock."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp when the record was created."
+        },
+        "created_by": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the user who created the record."
+        },
+        "text_summary":{
+          "type": "string",
+          "description": "Text summary of the record."
+        }
+      }
+    },
+    {
+      "metadata": {
+        "mongodb": {
+          "collection": "daily_layer_record",
+          "database": "poultry"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp when the record was created."
+        },
+        "created_by": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the user who created the record."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp when the record was last updated."
+        },
+        "updated_by": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the user who last updated the record."
+        },
+        "change_history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the change occurred."
+              },
+              "user_id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Who made the change."
+              },
+              "changes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "Name of the field changed."
+                    },
+                    "old": {
+                      "type": ["null", "string", "number", "array", "object"],
+                      "description": "Previous value."
+                    },
+                    "new": {
+                      "type": ["null", "string", "number", "array", "object"],
+                      "description": "New value."
+                    }
+                  },
+                  "required": ["field", "old", "new"]
+                }
+              }
+            },
+            "required": ["timestamp", "user_id", "changes"]
+          }
+        }
+      }
+    }
+  ]
+}
