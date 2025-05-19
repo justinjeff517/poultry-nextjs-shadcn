@@ -4,7 +4,7 @@
       "data": {
         "record_id": {
           "type": "string",
-          "format": "uuidv7",
+          "format": "uuid",
           "description": "Unique identifier for the record."
         },
         "record_date": {
@@ -88,7 +88,16 @@
           },
           "description": "List of vaccinations administered to the flock."
         },
-
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp when the record was created."
+        },
+        "created_by": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the user who created the record."
+        },
         "text_summary":{
           "type": "string",
           "description": "Text summary of the record."

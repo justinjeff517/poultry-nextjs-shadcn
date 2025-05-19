@@ -1,10 +1,8 @@
-{
-  "schema": [
     {
       "data": {
         "record_id": {
           "type": "string",
-          "format": "uuidv7",
+          "format": "uuid",
           "description": "Unique identifier for the record."
         },
         "record_date": {
@@ -88,19 +86,6 @@
           },
           "description": "List of vaccinations administered to the flock."
         },
-
-        "text_summary":{
-          "type": "string",
-          "description": "Text summary of the record."
-        }
-      }
-    },
-    {
-      "metadata": {
-        "mongodb": {
-          "collection": "daily_layer_record",
-          "database": "poultry"
-        },
         "created_at": {
           "type": "string",
           "format": "date-time",
@@ -111,57 +96,9 @@
           "format": "uuid",
           "description": "UUID of the user who created the record."
         },
-        "updated_at": {
+        "text_summary":{
           "type": "string",
-          "format": "date-time",
-          "description": "UTC timestamp when the record was last updated."
-        },
-        "updated_by": {
-          "type": "string",
-          "format": "uuid",
-          "description": "UUID of the user who last updated the record."
-        },
-        "change_history": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "timestamp": {
-                "type": "string",
-                "format": "date-time",
-                "description": "When the change occurred."
-              },
-              "user_id": {
-                "type": "string",
-                "format": "uuid",
-                "description": "Who made the change."
-              },
-              "changes": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "field": {
-                      "type": "string",
-                      "description": "Name of the field changed."
-                    },
-                    "old": {
-                      "type": ["null", "string", "number", "array", "object"],
-                      "description": "Previous value."
-                    },
-                    "new": {
-                      "type": ["null", "string", "number", "array", "object"],
-                      "description": "New value."
-                    }
-                  },
-                  "required": ["field", "old", "new"]
-                }
-              }
-            },
-            "required": ["timestamp", "user_id", "changes"]
-          }
+          "description": "Text summary of the record."
         }
       }
     }
-  ]
-}

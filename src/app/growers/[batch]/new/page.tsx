@@ -150,17 +150,6 @@ export default function Page({
         text_summary: values.text_summary,
         created_at: now,       // date-time
         created_by: userId     // uuid
-      },
-      metadata: {
-        mongodb: {
-          collection: "daily_layer_record",
-          database: "poultry"
-        },
-        created_at: now,       // date-time
-        created_by: userId,    // uuid
-        updated_at: now,       // date-time
-        updated_by: userId,    // uuid
-        change_history: []     // initially empty
       }
     }
 
