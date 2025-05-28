@@ -1,11 +1,6 @@
-// app/layout.tsx
 import React, { ReactNode } from 'react'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
-import { getServerSession } from 'next-auth/next'
-import type { NextAuthOptions, Session } from 'next-auth'
-import { authOptions } from './api/auth/[...nextauth]/route'
-import { Providers } from './providers'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -26,19 +21,13 @@ export const metadata = {
   description: 'Example Next.js + TypeScript layout',
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
-}: RootLayoutProps): Promise<JSX.Element> {
-  const session: Session | null = await getServerSession(
-    authOptions as NextAuthOptions
-  )
-
+}: RootLayoutProps): JSX.Element {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Providers session={session}>
-          {children}
-        </Providers>
+        {children}
       </body>
     </html>
   )

@@ -1,6 +1,4 @@
-"use client"
 import React from "react"
-import { useSession, signOut } from "next-auth/react"
 import {
   Avatar,
   AvatarFallback,
@@ -30,16 +28,13 @@ import {
 } from "@tabler/icons-react"
 
 export function NavUser() {
-  const { data: session, status } = useSession()
-  if (status === "loading") return null
-
-  // fallback to test JSON if there's no real session
-  const user = session?.user ?? {
+  // static test user
+  const user = {
     name: "Test User",
     email: "test@example.com",
     image: "",
   }
-  // generate an avatar URL if none provided
+
   const avatarUrl =
     user.image ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`
@@ -119,7 +114,7 @@ export function NavUser() {
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem onSelect={() => signOut()}>
+            <DropdownMenuItem>
               <IconLogout className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
