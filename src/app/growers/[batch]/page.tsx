@@ -4,6 +4,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MoreVertical } from "lucide-react";
+import { Text } from "@/components/ui/typography";
+
 import {
   Table,
   TableHeader,
@@ -156,17 +158,31 @@ const sampleData: RecordType[] = [
 ];
 
 const sortedData = sampleData.sort((a, b) => a.day_age - b.day_age);
+const latestPopulation = sortedData[sortedData.length - 1].curr_population;
 
 export default function Page() {
   const params = useParams();
   const slug = params.batch;
-  return (
-    <div className="h-full flex flex-col p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Alpha Flock Records</h1>
-      </div>
 
-      <div className="flex items-center gap-4">
+  return (
+    <div>
+
+    <div className="flex items-center justify-between border-b border-gray-200 py-2">
+      <p className="text-sm font-medium text-muted-foreground">
+        Batch:{" "}
+        <span className="text-base font-semibold text-primary">
+          Alpha Flock
+        </span>
+      </p>
+      <p className="text-sm font-medium text-muted-foreground">
+        Current Population:{" "}
+        <span className="text-base font-semibold text-primary">
+          {latestPopulation}
+        </span>
+      </p>
+    </div>
+
+      <div className="flex items-center gap-4 my-2">
         <Link href={`/growers/${slug}/new`}>
           <Button asChild className="justify-start">
             <span>New Record</span>
@@ -199,12 +215,8 @@ export default function Page() {
               <TableCell>{r.dead_count}</TableCell>
               <TableCell>{r.prev_population}</TableCell>
               <TableCell>{r.curr_population}</TableCell>
-              <TableCell>
-                {r.medications.map((m) => m.name).join(", ")}
-              </TableCell>
-              <TableCell>
-                {r.vaccinations.map((v) => v.name).join(", ")}
-              </TableCell>
+              <TableCell>{r.medications.map((m) => m.name).join(", ")}</TableCell>
+              <TableCell>{r.vaccinations.map((v) => v.name).join(", ")}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

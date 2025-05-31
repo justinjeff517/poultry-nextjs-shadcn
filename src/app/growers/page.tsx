@@ -20,7 +20,7 @@ const batches: Batch[] = [
 
 export default function Page() {
   return (
-    <div className="container mx-auto p-4">
+    <div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {batches.map(batch => (
           <Card key={batch.slug}>
