@@ -2,12 +2,12 @@
   "schema": [
     {
       "data": {
-        "record_id": {
+        "id": {
           "type": "string",
-          "format": "uuidv7",
+          "format": "uuid",
           "description": "Unique identifier for the record."
         },
-        "record_date": {
+        "date": {
           "type": "string",
           "format": "date",
           "description": "Date of the record (YYYY-MM-DD)."
@@ -88,7 +88,6 @@
           },
           "description": "List of vaccinations administered to the flock."
         },
-
         "text_summary":{
           "type": "string",
           "description": "Text summary of the record."

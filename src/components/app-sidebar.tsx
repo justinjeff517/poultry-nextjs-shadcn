@@ -30,14 +30,9 @@ const data = {
   },
   navMain: [
     {
-      title: "Growers",
-      url: "/growers",
+      title: "Batches",
+      url: "/batches",
       icon: IconEggs,
-    },
-    {
-      title: "Layers",
-      url: "/layers",
-      icon: IconFeather,
     }
   ]
 }
