@@ -1,9 +1,6 @@
-"use client"
 import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Search } from "lucide-react"
 
 type Batch = {
   name: string
@@ -22,31 +19,20 @@ const batches: Batch[] = [
 
 export default function Page() {
   return (
-    <div className="container mx-auto p-6 space-y-6">
-
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {batches.map((batch, i) => (
-          <Card
-            key={batch.slug}
-            className={`overflow-hidden rounded-2xl shadow-md transition-transform duration-200 
-              hover:scale-[1.02] ${i % 2 === 0 ? "bg-gradient-to-tr from-white to-gray-50" : "bg-white"}`}
-          >
-            <CardHeader className="pb-0">
-              <CardTitle className="text-xl">{batch.name}</CardTitle>
-              <Badge className="mt-1">{batch.breed}</Badge>
-            </CardHeader>
-            <CardContent className="flex flex-col justify-between h-full">
-              <p className="text-sm text-gray-600">ID: <span className="font-mono">{batch.slug}</span></p>
-              <Button asChild className="mt-4 self-end">
-                <Link href={`/layers/${batch.slug}`} className="px-4 py-2">
-                  Manage
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
+      {batches.map((batch) => (
+        <Card key={batch.slug}>
+          <CardHeader>
+            <CardTitle>{batch.name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Breed: {batch.breed}</p>
+            <Button asChild className="mt-4">
+              <Link href={`/layers/${batch.slug}`}>Select</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   )
 }
